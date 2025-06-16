@@ -1,121 +1,16 @@
--- Murder Mystery 2 gelişmiş player highlighter + otomatik aimbot butonları (sade ve optimize)
+-- MM2 MOBİL UYUMLU, SÜRÜKLENEBİLİR, KUSURSUZ AUTO-SHOOT/AUTO-THROW & GROUND GUN ESP
 
-local Players, LocalPlayer, RunService, Camera = game:GetService("Players"), game:GetService("Players").LocalPlayer, game:GetService("RunService"), workspace.CurrentCamera
-local MM2_PLACE_ID = 142823291
-local COLORS = {Murderer=Color3.fromRGB(255,60,60),Sheriff=Color3.fromRGB(60,160,255),Innocent=Color3.fromRGB(60,220,100)}
-local _G = _G or {}
-_G.HighlightBox, _G.HighlightName, _G.HighlightDist = true, true, true
-_G.GUIKey = Enum.KeyCode.RightShift
+local Players,LocalPlayer,RunService,Camera=game:GetService("Players"),game.Players.LocalPlayer,game:GetService("RunService"),workspace.CurrentCamera
+local MM2_PLACE_ID=142823291
+local COLORS={Murderer=Color3.fromRGB(255,60,60),Sheriff=Color3.fromRGB(60,160,255),Innocent=Color3.fromRGB(60,220,100),Gun=Color3.fromRGB(230,220,100)}
+local _G=_G or{};_G.HighlightBox,_G.HighlightName,_G.HighlightDist=true,true,true
+_G.GUIKey=Enum.KeyCode.RightShift
 
-local gui = Instance.new("ScreenGui",LocalPlayer:WaitForChild("PlayerGui")) gui.Name="PlayerHighlighter"
-local main = Instance.new("Frame",gui)
-main.Name="MainWindow" main.AnchorPoint=Vector2.new(0.5,0) main.Position=UDim2.new(0.5,0,0.27,0) main.Size=UDim2.new(0,430,0,380)
-main.BackgroundColor3=Color3.fromRGB(20,20,28) main.BackgroundTransparency=0.25 main.BorderSizePixel=2 main.BorderColor3=Color3.fromRGB(38,48,60)
-main.Active=true main.Draggable=true
+-- === GUI ===
+local gui=Instance.new("ScreenGui",LocalPlayer:WaitForChild("PlayerGui")) gui.Name="PH_GUI" gui.IgnoreGuiInset=true
 
-local bar = Instance.new("Frame",main) bar.Size=UDim2.new(1,0,0,34) bar.BackgroundColor3=Color3.fromRGB(10,10,14) bar.BorderSizePixel=0
-local title = Instance.new("TextLabel",bar) title.Size=UDim2.new(1,-80,1,0) title.Position=UDim2.new(0,16,0,0)
-title.BackgroundTransparency=1 title.Text="Player Highlighter Menu" title.Font=Enum.Font.GothamBold title.TextColor3=Color3.fromRGB(200,210,240) title.TextSize=20 title.TextXAlignment=Enum.TextXAlignment.Left
-
-local close = Instance.new("TextButton",bar) close.Size=UDim2.new(0,28,0,28) close.Position=UDim2.new(1,-40,0.5,-14)
-close.BackgroundColor3=Color3.fromRGB(30,36,52) close.BackgroundTransparency=0.13 close.Text="✕" close.TextColor3=Color3.fromRGB(255,80,80)
-close.Font=Enum.Font.GothamBold close.TextSize=18 close.BorderSizePixel=0
-
-local minimize = Instance.new("TextButton",bar) minimize.Size=UDim2.new(0,28,0,28) minimize.Position=UDim2.new(1,-72,0.5,-14)
-minimize.BackgroundColor3=Color3.fromRGB(30,36,52) minimize.BackgroundTransparency=0.13 minimize.Text="—"
-minimize.TextColor3=Color3.fromRGB(50,120,255) minimize.Font=Enum.Font.GothamBold minimize.TextSize=18 minimize.BorderSizePixel=0
-
-local mini = Instance.new("TextButton",gui) mini.Name="MiniButton" mini.Size=UDim2.new(0,38,0,38) mini.Position=UDim2.new(0,24,0,60)
-mini.BackgroundColor3=Color3.fromRGB(30,36,52) mini.BackgroundTransparency=0.17 mini.Text="≡"
-mini.TextColor3=Color3.fromRGB(50,120,255) mini.Font=Enum.Font.GothamBold mini.TextSize=26 mini.BorderSizePixel=0 mini.Visible=false mini.Active=true mini.Draggable=true
-
-local tabNames = {"Visuals","Settings","Aimbot","Other"} local tabBtns,tabFrames={},{}
-local tablist = Instance.new("Frame",main) tablist.Size=UDim2.new(0,128,1,-44) tablist.Position=UDim2.new(0,0,0,34)
-tablist.BackgroundColor3=Color3.fromRGB(10,10,14) tablist.BackgroundTransparency=0.19 tablist.BorderSizePixel=0
-for i,tab in ipairs(tabNames) do
-    local btn = Instance.new("TextButton",tablist)
-    btn.Size=UDim2.new(1,-16,0,38) btn.Position=UDim2.new(0,8,0,(i-1)*44+8)
-    btn.BackgroundColor3=(i==1) and Color3.fromRGB(50,120,255) or Color3.fromRGB(30,36,52)
-    btn.BackgroundTransparency=(i==1) and 0.09 or 0.21 btn.Text=tab btn.Font=Enum.Font.GothamBold
-    btn.TextColor3=(i==1) and Color3.fromRGB(20,20,28) or Color3.fromRGB(50,120,255)
-    btn.TextSize=16 btn.BorderSizePixel=0 tabBtns[i]=btn
-    local tabF = Instance.new("Frame",main)
-    tabF.Size=UDim2.new(1,-138,1,-48) tabF.Position=UDim2.new(0,138,0,44) tabF.BackgroundColor3=Color3.fromRGB(10,10,14)
-    tabF.BackgroundTransparency=0.31 tabF.BorderSizePixel=0 tabF.Visible=(i==1) tabFrames[i]=tabF
-    btn.MouseButton1Click:Connect(function()
-        for j=1,#tabNames do
-            tabFrames[j].Visible=(i==j)
-            tabBtns[j].BackgroundColor3=(i==j) and Color3.fromRGB(50,120,255) or Color3.fromRGB(30,36,52)
-            tabBtns[j].TextColor3=(i==j) and Color3.fromRGB(20,20,28) or Color3.fromRGB(50,120,255)
-            tabBtns[j].BackgroundTransparency=(i==j) and 0.09 or 0.21
-        end
-    end)
-end
-
-local visualsTab = tabFrames[1]
-local function addVisualToggle(text, default, cb)
-    local bg = Instance.new("Frame",visualsTab)
-    bg.Size=UDim2.new(1,-34,0,32) bg.Position=UDim2.new(0,16,0,18+((#visualsTab:GetChildren()-1)*38))
-    bg.BackgroundColor3=Color3.fromRGB(30,36,52) bg.BackgroundTransparency=0.34 bg.BorderSizePixel=0
-    local lbl = Instance.new("TextLabel",bg) lbl.Size=UDim2.new(1,-54,1,0) lbl.BackgroundTransparency=1
-    lbl.Text=text lbl.Font=Enum.Font.GothamBold lbl.TextColor3=Color3.fromRGB(200,210,240) lbl.TextSize=15 lbl.TextXAlignment=Enum.TextXAlignment.Left
-    local tog = Instance.new("TextButton",bg) tog.Size=UDim2.new(0,32,1,-8) tog.Position=UDim2.new(1,-40,0,4)
-    tog.BackgroundColor3=default and Color3.fromRGB(60,160,255) or Color3.fromRGB(40,44,60)
-    tog.Text=default and "✓" or "" tog.TextColor3=default and Color3.fromRGB(20,20,28) or Color3.fromRGB(50,120,255)
-    tog.Font=Enum.Font.GothamBold tog.TextSize=17 tog.BorderSizePixel=0
-    local val=default
-    tog.MouseButton1Click:Connect(function()
-        val=not val tog.BackgroundColor3=val and Color3.fromRGB(60,160,255) or Color3.fromRGB(40,44,60)
-        tog.Text=val and "✓" or "" tog.TextColor3=val and Color3.fromRGB(20,20,28) or Color3.fromRGB(50,120,255)
-        cb(val)
-    end)
-end
-addVisualToggle("Highlight Box",_G.HighlightBox,function(v)_G.HighlightBox=v end)
-addVisualToggle("Show Name",_G.HighlightName,function(v)_G.HighlightName=v end)
-addVisualToggle("Show Distance",_G.HighlightDist,function(v)_G.HighlightDist=v end)
-
-local settingsTab = tabFrames[2]
-local bg = Instance.new("Frame",settingsTab)
-bg.Size=UDim2.new(1,-34,0,34) bg.Position=UDim2.new(0,16,0,18) bg.BackgroundColor3=Color3.fromRGB(30,36,52)
-bg.BackgroundTransparency=0.34 bg.BorderSizePixel=0
-local lbl = Instance.new("TextLabel",bg)
-lbl.Size=UDim2.new(1,-70,1,0) lbl.BackgroundTransparency=1 lbl.Text="Minimize Key ( RightShift )"
-lbl.Font=Enum.Font.GothamBold lbl.TextColor3=Color3.fromRGB(200,210,240) lbl.TextSize=14 lbl.TextXAlignment=Enum.TextXAlignment.Left
-
-local aimbotTab = tabFrames[3]
-local autoShoot,autoThrow=false,false
-local shootToggle,throwToggle
-local function addAimbotToggle(text,isThrow)
-    local bg = Instance.new("Frame",aimbotTab)
-    bg.Size=UDim2.new(1,-34,0,44) bg.Position=UDim2.new(0,16,0,18+#aimbotTab:GetChildren()*48)
-    bg.BackgroundColor3=Color3.fromRGB(30,36,52) bg.BackgroundTransparency=0.34 bg.BorderSizePixel=0
-    local lbl = Instance.new("TextLabel",bg) lbl.Size=UDim2.new(1,-54,1,0) lbl.BackgroundTransparency=1
-    lbl.Text=text lbl.Font=Enum.Font.GothamBold lbl.TextColor3=Color3.fromRGB(200,210,240) lbl.TextSize=15 lbl.TextXAlignment=Enum.TextXAlignment.Left
-    local tog = Instance.new("TextButton",bg)
-    tog.Size=UDim2.new(0,32,1,-8) tog.Position=UDim2.new(1,-40,0,4) tog.BackgroundColor3=Color3.fromRGB(40,44,60)
-    tog.Text="" tog.TextColor3=Color3.fromRGB(50,120,255) tog.Font=Enum.Font.GothamBold tog.TextSize=17 tog.BorderSizePixel=0
-    tog.MouseButton1Click:Connect(function()
-        if isThrow then autoThrow=not autoThrow else autoShoot=not autoShoot end
-        tog.BackgroundColor3=(isThrow and autoThrow or (not isThrow and autoShoot)) and Color3.fromRGB(60,160,255) or Color3.fromRGB(40,44,60)
-        tog.Text=(isThrow and autoThrow or (not isThrow and autoShoot)) and "✓" or ""
-        buttonSetup()
-    end)
-    if isThrow then throwToggle=tog else shootToggle=tog end
-end
-addAimbotToggle("Auto Shoot Murder",false)
-addAimbotToggle("Auto Throw Knife",true)
-
-local otherTab = tabFrames[4]
-local info = Instance.new("TextLabel",otherTab)
-info.Size=UDim2.new(1,-38,1,-38) info.Position=UDim2.new(0,19,0,20) info.BackgroundTransparency=1
-info.Text="Ekstra özellikler bu sekmeye eklenebilir." info.TextColor3=Color3.fromRGB(200,210,240)
-info.Font=Enum.Font.Gotham info.TextSize=15 info.TextWrapped=true
-
-local minimized=false
-minimize.MouseButton1Click:Connect(function() minimized=not minimized main.Visible=not minimized mini.Visible=minimized end)
-close.MouseButton1Click:Connect(function() gui:Destroy() end)
-mini.MouseButton1Click:Connect(function() minimized=false main.Visible=true mini.Visible=false end)
-local function enableMobileDrag(f)
+-- SÜRÜKLENEBİLİR YAPI
+local function makeDraggable(f)
     local dragToggle,dragStart,startPos
     f.InputBegan:Connect(function(input)
         if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
@@ -130,170 +25,264 @@ local function enableMobileDrag(f)
         end
     end)
 end
-enableMobileDrag(main) enableMobileDrag(mini)
 
-local function isMM2() return game.PlaceId==MM2_PLACE_ID end
+-- === BUTONLAR ===
+local shootBtn,throwBtn
+do
+    shootBtn=Instance.new("TextButton",gui)
+    shootBtn.Size=UDim2.new(0,60,0,60)
+    shootBtn.Position=UDim2.new(0.25,-30,0.85,0)
+    shootBtn.BackgroundColor3=Color3.fromRGB(38,48,60)
+    shootBtn.Text="🔫"
+    shootBtn.TextColor3=Color3.fromRGB(60,160,255)
+    shootBtn.Font=Enum.Font.GothamBold
+    shootBtn.TextSize=30
+    shootBtn.BorderSizePixel=2
+    shootBtn.BorderColor3=Color3.fromRGB(30,36,52)
+    makeDraggable(shootBtn)
+    throwBtn=Instance.new("TextButton",gui)
+    throwBtn.Size=UDim2.new(0,60,0,60)
+    throwBtn.Position=UDim2.new(0.75,-30,0.85,0)
+    throwBtn.BackgroundColor3=Color3.fromRGB(38,48,60)
+    throwBtn.Text="🔪"
+    throwBtn.TextColor3=Color3.fromRGB(255,60,60)
+    throwBtn.Font=Enum.Font.GothamBold
+    throwBtn.TextSize=30
+    throwBtn.BorderSizePixel=2
+    throwBtn.BorderColor3=Color3.fromRGB(30,36,52)
+    makeDraggable(throwBtn)
+end
+
+-- === KULLANICI AYARLI MENÜ (KISA) ===
+local menu=Instance.new("Frame",gui)
+menu.Name="Menu"
+menu.Size=UDim2.new(0,240,0,210)
+menu.Position=UDim2.new(0.5,-120,0.18,0)
+menu.BackgroundColor3=Color3.fromRGB(20,20,28)
+menu.BackgroundTransparency=0.22
+menu.BorderSizePixel=2
+menu.BorderColor3=Color3.fromRGB(38,48,60)
+menu.Active=true
+makeDraggable(menu)
+menu.Visible=true
+
+local title=Instance.new("TextLabel",menu)
+title.Size=UDim2.new(1,0,0,36)
+title.BackgroundTransparency=1
+title.Text="Player Highlighter Menu"
+title.Font=Enum.Font.GothamBold
+title.TextColor3=Color3.fromRGB(200,210,240)
+title.TextSize=18
+
+local function addToggle(text,default,cb)
+    local idx=#menu:GetChildren()
+    local bg=Instance.new("Frame",menu)
+    bg.Size=UDim2.new(1,-24,0,28)
+    bg.Position=UDim2.new(0,12,0,36+((idx-1)*32))
+    bg.BackgroundColor3=Color3.fromRGB(30,36,52)
+    bg.BackgroundTransparency=0.18
+    bg.BorderSizePixel=0
+    local lbl=Instance.new("TextLabel",bg)
+    lbl.Size=UDim2.new(1,-34,1,0)
+    lbl.BackgroundTransparency=1
+    lbl.Text=text
+    lbl.Font=Enum.Font.Gotham
+    lbl.TextColor3=Color3.fromRGB(200,210,240)
+    lbl.TextSize=14
+    lbl.TextXAlignment=Enum.TextXAlignment.Left
+    local tog=Instance.new("TextButton",bg)
+    tog.Size=UDim2.new(0,24,1,-6)
+    tog.Position=UDim2.new(1,-28,0,3)
+    tog.BackgroundColor3=default and Color3.fromRGB(60,160,255) or Color3.fromRGB(40,44,60)
+    tog.Text=default and "✓" or ""
+    tog.TextColor3=default and Color3.fromRGB(20,20,28) or Color3.fromRGB(50,120,255)
+    tog.Font=Enum.Font.GothamBold
+    tog.TextSize=15
+    tog.BorderSizePixel=0
+    local val=default
+    tog.MouseButton1Click:Connect(function()
+        val=not val
+        tog.BackgroundColor3=val and Color3.fromRGB(60,160,255) or Color3.fromRGB(40,44,60)
+        tog.Text=val and "✓" or ""
+        tog.TextColor3=val and Color3.fromRGB(20,20,28) or Color3.fromRGB(50,120,255)
+        cb(val)
+    end)
+end
+
+addToggle("Highlight Box",_G.HighlightBox,function(v)_G.HighlightBox=v end)
+addToggle("Show Name",_G.HighlightName,function(v)_G.HighlightName=v end)
+addToggle("Show Distance",_G.HighlightDist,function(v)_G.HighlightDist=v end)
+
+-- === HIGHLIGHT VE ESP ===
+local function isMM2()return game.PlaceId==MM2_PLACE_ID end
 local function getRole(plr)
     local role="Innocent"
-    if not isMM2() then return role end
+    if not isMM2()then return role end
     pcall(function()
         local Game=game:GetService("Workspace"):FindFirstChild("Game")or game:GetService("ReplicatedStorage"):FindFirstChild("Game")
-        if Game and Game:FindFirstChild("Players") then
+        if Game and Game:FindFirstChild("Players")then
             local p=Game.Players:FindFirstChild(plr.Name)
-            if p and p:FindFirstChild("Role") then
+            if p and p:FindFirstChild("Role")then
                 local val=p.Role.Value
                 if val=="Murderer"then role="Murderer" elseif val=="Sheriff"then role="Sheriff" end
             end
         end
     end)
-    if role=="Innocent" then
+    if role=="Innocent"then
         pcall(function()
-            if plr.Backpack:FindFirstChild("Gun") or (plr.Character and plr.Character:FindFirstChild("Gun")) then role="Sheriff" end
-            if plr.Backpack:FindFirstChild("Knife") or (plr.Character and plr.Character:FindFirstChild("Knife")) then role="Murderer" end
+            if plr.Backpack:FindFirstChild("Gun") or(plr.Character and plr.Character:FindFirstChild("Gun"))then role="Sheriff"end
+            if plr.Backpack:FindFirstChild("Knife")or(plr.Character and plr.Character:FindFirstChild("Knife"))then role="Murderer"end
         end)
     end
+    -- Hero için
+    if plr.Character and plr.Character:FindFirstChild("Hero") then role="Sheriff" end
     return role
 end
-
-local function createHighlight(char, color)
+local function createHighlight(char,color)
     if not char or char:FindFirstChild("PH_HL") or not _G.HighlightBox then return end
     local hl=Instance.new("Highlight",char) hl.Name="PH_HL" hl.Adornee=char hl.FillColor=color hl.OutlineColor=color hl.FillTransparency=0.8 hl.OutlineTransparency=0.13
 end
-local function removeHighlight(char) if char and char:FindFirstChild("PH_HL") then char.PH_HL:Destroy() end end
+local function removeHighlight(char)if char and char:FindFirstChild("PH_HL")then char.PH_HL:Destroy()end end
 local function createBillboard(plr,char,color,role)
-    if char:FindFirstChild("PH_BILL") then return end
-    local bb=Instance.new("BillboardGui",char) bb.Name="PH_BILL"
-    bb.Adornee=char:FindFirstChild("Head")or char:FindFirstChild("HumanoidRootPart") bb.Size=UDim2.new(0,140,0,38) bb.AlwaysOnTop=true bb.StudsOffset=Vector3.new(0,2.5,0)
-    local name=Instance.new("TextLabel",bb) name.Name="PH_NAME" name.BackgroundTransparency=1 name.TextColor3=color name.TextStrokeTransparency=0.7
+    if char:FindFirstChild("PH_BILL")then return end
+    local bb=Instance.new("BillboardGui",char)bb.Name="PH_BILL"
+    bb.Adornee=char:FindFirstChild("Head")or char:FindFirstChild("HumanoidRootPart")bb.Size=UDim2.new(0,140,0,38)bb.AlwaysOnTop=true bb.StudsOffset=Vector3.new(0,2.5,0)
+    local name=Instance.new("TextLabel",bb)name.Name="PH_NAME" name.BackgroundTransparency=1 name.TextColor3=color name.TextStrokeTransparency=0.7
     name.Font=Enum.Font.GothamBold name.TextSize=16 name.Size=UDim2.new(1,0,0.59,0) name.Text=plr.DisplayName.." ["..role.."]" name.Visible=_G.HighlightName
-    local dist=Instance.new("TextLabel",bb) dist.Name="PH_DIST" dist.BackgroundTransparency=1 dist.TextColor3=color dist.TextStrokeTransparency=0.5
-    dist.Font=Enum.Font.Gotham dist.TextSize=14 dist.Position=UDim2.new(0,0,0.59,-2) dist.Size=UDim2.new(1,0,0.41,0) dist.Text="" dist.Visible=_G.HighlightDist
+    local dist=Instance.new("TextLabel",bb)dist.Name="PH_DIST"dist.BackgroundTransparency=1 dist.TextColor3=color dist.TextStrokeTransparency=0.5
+    dist.Font=Enum.Font.Gotham dist.TextSize=14 dist.Position=UDim2.new(0,0,0.59,-2)dist.Size=UDim2.new(1,0,0.41,0)dist.Text=""dist.Visible=_G.HighlightDist
 end
-local function removeBillboard(char) if char and char:FindFirstChild("PH_BILL") then char.PH_BILL:Destroy() end end
+local function removeBillboard(char)if char and char:FindFirstChild("PH_BILL")then char.PH_BILL:Destroy()end end
 local function updateBillboard(plr,char,color,role)
-    local bb=char:FindFirstChild("PH_BILL") if bb then
-        local name=bb:FindFirstChild("PH_NAME") local dist=bb:FindFirstChild("PH_DIST")
-        if name then name.Visible=_G.HighlightName name.TextColor3=color name.Text=plr.DisplayName.." ["..role.."]" end
+    local bb=char:FindFirstChild("PH_BILL")if bb then
+        local name=bb:FindFirstChild("PH_NAME")local dist=bb:FindFirstChild("PH_DIST")
+        if name then name.Visible=_G.HighlightName name.TextColor3=color name.Text=plr.DisplayName.." ["..role.."]"end
         if dist then dist.Visible=_G.HighlightDist dist.TextColor3=color
-            if _G.HighlightDist and char:FindFirstChild("HumanoidRootPart") then
+            if _G.HighlightDist and char:FindFirstChild("HumanoidRootPart")then
                 local studs=(char.HumanoidRootPart.Position-Camera.CFrame.Position).Magnitude
                 dist.Text=string.format("%.0fm",studs/3.3)
-            else dist.Text="" end
+            else dist.Text=""end
         end
     end
 end
 local function applyHighlight(plr)
     if plr==LocalPlayer then return end
     local function charAdded(char)
-        if not isMM2() then return end
-        local role=getRole(plr) local color=COLORS[role]
-        if _G.HighlightBox then createHighlight(char,color) end
+        if not isMM2()then return end
+        local role=getRole(plr)local color=COLORS[role]
+        if _G.HighlightBox then createHighlight(char,color)end
         createBillboard(plr,char,color,role)
-        char.AncestryChanged:Connect(function(_,parent) if not parent then removeHighlight(char) removeBillboard(char) end end)
+        char.AncestryChanged:Connect(function(_,parent)if not parent then removeHighlight(char)removeBillboard(char)end end)
     end
-    if plr.Character then charAdded(plr.Character) end
+    if plr.Character then charAdded(plr.Character)end
     plr.CharacterAdded:Connect(charAdded)
 end
 local function cleanupPlayer(plr)
-    if plr.Character then removeHighlight(plr.Character) removeBillboard(plr.Character) end
+    if plr.Character then removeHighlight(plr.Character)removeBillboard(plr.Character)end
 end
-Players.PlayerAdded:Connect(applyHighlight) Players.PlayerRemoving:Connect(cleanupPlayer)
-for _,plr in ipairs(Players:GetPlayers())do applyHighlight(plr) end
-RunService.RenderStepped:Connect(function()
-    for _,plr in ipairs(Players:GetPlayers())do
-        if plr~=LocalPlayer and plr.Character then
-            if not isMM2()then removeHighlight(plr.Character) removeBillboard(plr.Character)
-            else
-                local role=getRole(plr) local color=COLORS[role]
-                if _G.HighlightBox then
-                    if not plr.Character:FindFirstChild("PH_HL") then createHighlight(plr.Character,color)
-                    else local hl=plr.Character.PH_HL if hl.FillColor~=color then hl.FillColor=color hl.OutlineColor=color end end
-                else removeHighlight(plr.Character) end
-                updateBillboard(plr,plr.Character,color,role)
-                if not _G.HighlightName and not _G.HighlightDist then removeBillboard(plr.Character)
-                elseif not plr.Character:FindFirstChild("PH_BILL") then createBillboard(plr,plr.Character,color,role) end
-            end
-        end
+Players.PlayerAdded:Connect(applyHighlight)Players.PlayerRemoving:Connect(cleanupPlayer)
+for _,plr in ipairs(Players:GetPlayers())do applyHighlight(plr)end
+
+-- === GROUND GUN ESP ===
+local gunBill
+local function gunESP()
+    if gunBill then gunBill:Destroy()gunBill=nil end
+    local found
+    for _,v in ipairs(workspace:GetChildren())do
+        if v:IsA("Tool")and v.Name=="GunDrop"then found=v break end
     end
-end)
-game:GetService("UserInputService").InputBegan:Connect(function(input,gpe)
-    if input.KeyCode==_G.GUIKey and not gpe then main.Visible=not main.Visible mini.Visible=not main.Visible end
-end)
-
--- ===== Otomatik Butonlar =====
-local shootBtn,throwBtn
-function makeActionBtn(iconText,callback)
-    local btn=Instance.new("TextButton",gui)
-    btn.Size=UDim2.new(0,56,0,56) btn.Position=UDim2.new(0.5,-100,0.75,0)
-    btn.BackgroundColor3=Color3.fromRGB(30,36,52) btn.BackgroundTransparency=0.05 btn.Text=iconText
-    btn.TextColor3=Color3.fromRGB(50,120,255) btn.Font=Enum.Font.GothamBold btn.TextSize=28 btn.BorderSizePixel=2
-    btn.BorderColor3=Color3.fromRGB(38,48,60) btn.Visible=true btn.Active=true btn.Draggable=true
-    btn.MouseButton1Click:Connect(callback)
-    return btn
+    if found and _G.HighlightBox then
+        gunBill=Instance.new("BillboardGui",gui)
+        gunBill.Name="PH_GUNESP"
+        gunBill.AlwaysOnTop=true
+        gunBill.Size=UDim2.new(0,120,0,38)
+        gunBill.StudsOffset=Vector3.new(0,2.2,0)
+        gunBill.Adornee=found:FindFirstChild("Handle")
+        local hl=Instance.new("Highlight",found)
+        hl.Name="PH_GUNHL"
+        hl.Adornee=found
+        hl.FillColor=COLORS.Gun
+        hl.OutlineColor=COLORS.Gun
+        hl.FillTransparency=0.75
+        hl.OutlineTransparency=0.08
+        local txt=Instance.new("TextLabel",gunBill)
+        txt.Size=UDim2.new(1,0,1,0)
+        txt.BackgroundTransparency=1
+        txt.Text="🔫 GUN"
+        txt.Font=Enum.Font.GothamBold
+        txt.TextSize=18
+        txt.TextColor3=COLORS.Gun
+        txt.TextStrokeTransparency=0.6
+    end
 end
 
-function murderInSight()
-    local murder
+-- === AUTO SHOOT & THROW ===
+local function murderInSight()
     for _,plr in ipairs(Players:GetPlayers())do
-        if plr~=LocalPlayer and getRole(plr)=="Murderer" and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        if plr~=LocalPlayer and getRole(plr)=="Murderer"and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")then
             local pos=plr.Character.HumanoidRootPart.Position
             local origin=Camera.CFrame.Position
             local ray=Ray.new(origin,(pos-origin).Unit*500)
-            local hit,_,_=workspace:FindPartOnRayWithIgnoreList(ray,{LocalPlayer.Character})
+            local hit=workspace:FindPartOnRayWithIgnoreList(ray,{LocalPlayer.Character})
             if hit and plr.Character:IsAncestorOf(hit)then return plr end
         end
     end
-    return nil
 end
-
-function fireGun(target)
+local function fireGun(target)
     local char=LocalPlayer.Character if not char then return end
     local gun=char:FindFirstChild("Gun")or LocalPlayer.Backpack:FindFirstChild("Gun")
     if not gun then return end
-    local remote=gun:FindFirstChild("Remote") or gun:FindFirstChildWhichIsA("RemoteEvent")
-    if remote then
-        remote:FireServer(target.Character.HumanoidRootPart.Position)
-    end
+    local remote=gun:FindFirstChild("Remote")or gun:FindFirstChildWhichIsA("RemoteEvent")
+    if remote then remote:FireServer(target.Character.HumanoidRootPart.Position)end
 end
-
-function nearestPlayer()
+local function nearestPlayer()
     local minDist=1/0 local nearest
     for _,plr in ipairs(Players:GetPlayers())do
-        if plr~=LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Humanoid")and plr.Character.Humanoid.Health>0 then
+        if plr~=LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")and plr.Character:FindFirstChild("Humanoid")and plr.Character.Humanoid.Health>0 then
             local dist=(plr.Character.HumanoidRootPart.Position-LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
             if dist<minDist then minDist=dist nearest=plr end
         end
     end
     return nearest
 end
-
-function throwKnife(target)
+local function throwKnife(target)
     local char=LocalPlayer.Character if not char then return end
     local knife=char:FindFirstChild("Knife")or LocalPlayer.Backpack:FindFirstChild("Knife")
     if not knife then return end
-    local remote=knife:FindFirstChild("Remote") or knife:FindFirstChildWhichIsA("RemoteEvent")
-    if remote then
-        remote:FireServer(target.Character.HumanoidRootPart.Position)
-    end
+    local remote=knife:FindFirstChild("Remote")or knife:FindFirstChildWhichIsA("RemoteEvent")
+    if remote then remote:FireServer(target.Character.HumanoidRootPart.Position)end
 end
 
-function buttonSetup()
-    if shootBtn then shootBtn:Destroy() shootBtn=nil end
-    if throwBtn then throwBtn:Destroy() throwBtn=nil end
-    if autoShoot and isMM2() and getRole(LocalPlayer)=="Sheriff" then
-        shootBtn=makeActionBtn("🔫",function()
-            local murder=murderInSight()
-            if murder then fireGun(murder) end
-        end)
+-- === BUTON TIKLAMALAR ===
+shootBtn.MouseButton1Click:Connect(function()
+    if isMM2()and(getRole(LocalPlayer)=="Sheriff")then
+        local murder=murderInSight()
+        if murder then fireGun(murder)end
     end
-    if autoThrow and isMM2() and getRole(LocalPlayer)=="Murderer" then
-        throwBtn=makeActionBtn("🔪",function()
-            local target=nearestPlayer()
-            if target then throwKnife(target) end
-        end)
+end)
+throwBtn.MouseButton1Click:Connect(function()
+    if isMM2()and(getRole(LocalPlayer)=="Murderer")then
+        local target=nearestPlayer()
+        if target then throwKnife(target)end
     end
-end
+end)
 
+-- === GÜNCELLEME DÖNGÜSÜ ===
 RunService.RenderStepped:Connect(function()
-    buttonSetup()
+    for _,plr in ipairs(Players:GetPlayers())do
+        if plr~=LocalPlayer and plr.Character then
+            if not isMM2()then removeHighlight(plr.Character)removeBillboard(plr.Character)
+            else
+                local role=getRole(plr)local color=COLORS[role]
+                if _G.HighlightBox then
+                    if not plr.Character:FindFirstChild("PH_HL")then createHighlight(plr.Character,color)
+                    else local hl=plr.Character.PH_HL if hl.FillColor~=color then hl.FillColor=color hl.OutlineColor=color end end
+                else removeHighlight(plr.Character)end
+                updateBillboard(plr,plr.Character,color,role)
+                if not _G.HighlightName and not _G.HighlightDist then removeBillboard(plr.Character)
+                elseif not plr.Character:FindFirstChild("PH_BILL")then createBillboard(plr,plr.Character,color,role)end
+            end
+        end
+    end
+    gunESP()
 end)
