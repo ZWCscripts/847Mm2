@@ -1,0 +1,565 @@
+-- Modern Player Highlighter + Murder Mystery 2 Renkli Rol Desteği + Kendi Menüsü (PC+Mobile)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local PlaceId = game.PlaceId
+
+-- MM2'nin PlaceId'si: 142823291
+local MM2_PLACE_ID = 142823291
+
+-- Renkler (MM2 rolleri)
+local COLORS = {
+    Murderer = Color3.fromRGB(255, 60, 60),
+    Sheriff = Color3.fromRGB(60, 160, 255),
+    Innocent = Color3.fromRGB(60, 220, 100)
+}
+-- Tema renkleri (menü)
+local THEME_BG = Color3.fromRGB(20, 20, 28)
+local THEME_DARK = Color3.fromRGB(10, 10, 14)
+local THEME_BORDER = Color3.fromRGB(38, 48, 60)
+local THEME_ACCENT = Color3.fromRGB(50, 120, 255)
+local THEME_LABEL = Color3.fromRGB(200, 210, 240)
+local THEME_ON = Color3.fromRGB(60, 160, 255)
+local THEME_OFF = Color3.fromRGB(40, 44, 60)
+local THEME_BTN = Color3.fromRGB(30, 36, 52)
+local THEME_TRANS = 0.25
+
+-- Ayarlar
+_G.HighlightBox = true
+_G.HighlightName = true
+_G.HighlightDist = true
+_G.GUIKey = Enum.KeyCode.RightShift
+_G.AimbotEnabled = false
+
+-- GUI OLUŞTURMA
+local gui = Instance.new("ScreenGui")
+gui.Name = "PlayerHighlighter"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local main = Instance.new("Frame")
+main.Name = "MainWindow"
+main.AnchorPoint = Vector2.new(0.5,0)
+main.Position = UDim2.new(0.5, 0, 0.27, 0)
+main.Size = UDim2.new(0, 430, 0, 380)
+main.BackgroundColor3 = THEME_BG
+main.BackgroundTransparency = THEME_TRANS
+main.BorderSizePixel = 2
+main.BorderColor3 = THEME_BORDER
+main.Active = true
+main.Draggable = true
+main.Parent = gui
+
+-- ÜST BAR
+local bar = Instance.new("Frame")
+bar.Size = UDim2.new(1,0,0,34)
+bar.BackgroundColor3 = THEME_DARK
+bar.BorderSizePixel = 0
+bar.Parent = main
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,-80,1,0)
+title.Position = UDim2.new(0,16,0,0)
+title.BackgroundTransparency = 1
+title.Text = "Player Highlighter Menu"
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = THEME_LABEL
+title.TextSize = 20
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = bar
+
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0,28,0,28)
+close.Position = UDim2.new(1,-40,0.5,-14)
+close.BackgroundColor3 = THEME_BTN
+close.BackgroundTransparency = 0.13
+close.Text = "✕"
+close.TextColor3 = Color3.fromRGB(255,80,80)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 18
+close.BorderSizePixel = 0
+close.Parent = bar
+
+local minimize = Instance.new("TextButton")
+minimize.Size = UDim2.new(0,28,0,28)
+minimize.Position = UDim2.new(1,-72,0.5,-14)
+minimize.BackgroundColor3 = THEME_BTN
+minimize.BackgroundTransparency = 0.13
+minimize.Text = "—"
+minimize.TextColor3 = THEME_ACCENT
+minimize.Font = Enum.Font.GothamBold
+minimize.TextSize = 18
+minimize.BorderSizePixel = 0
+minimize.Parent = bar
+
+local mini = Instance.new("TextButton")
+mini.Name = "MiniButton"
+mini.Size = UDim2.new(0,38,0,38)
+mini.Position = UDim2.new(0,24,0,60)
+mini.BackgroundColor3 = THEME_BTN
+mini.BackgroundTransparency = 0.17
+mini.Text = "≡"
+mini.TextColor3 = THEME_ACCENT
+mini.Font = Enum.Font.GothamBold
+mini.TextSize = 26
+mini.BorderSizePixel = 0
+mini.Visible = false
+mini.Active = true
+mini.Draggable = true
+mini.Parent = gui
+
+-- Yan menü
+local tabNames = {"Visuals", "Settings", "Aimbot", "Other"}
+local tabBtns, tabFrames = {}, {}
+local tablist = Instance.new("Frame")
+tablist.Size = UDim2.new(0, 128, 1, -44)
+tablist.Position = UDim2.new(0,0,0,34)
+tablist.BackgroundColor3 = THEME_DARK
+tablist.BackgroundTransparency = 0.19
+tablist.BorderSizePixel = 0
+tablist.Parent = main
+
+for i,tab in ipairs(tabNames) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -16, 0, 38)
+    btn.Position = UDim2.new(0, 8, 0, (i-1)*44 + 8)
+    btn.BackgroundColor3 = i==1 and THEME_ACCENT or THEME_BTN
+    btn.BackgroundTransparency = i==1 and 0.09 or 0.21
+    btn.Text = tab
+    btn.Font = Enum.Font.GothamBold
+    btn.TextColor3 = i==1 and THEME_BG or THEME_ACCENT
+    btn.TextSize = 16
+    btn.BorderSizePixel = 0
+    btn.Parent = tablist
+    tabBtns[i] = btn
+
+    local tabF = Instance.new("Frame")
+    tabF.Size = UDim2.new(1, -138, 1, -48)
+    tabF.Position = UDim2.new(0, 138, 0, 44)
+    tabF.BackgroundColor3 = THEME_DARK
+    tabF.BackgroundTransparency = 0.31
+    tabF.BorderSizePixel = 0
+    tabF.Visible = (i==1)
+    tabF.Parent = main
+    tabFrames[i] = tabF
+
+    btn.MouseButton1Click:Connect(function()
+        for j=1,#tabNames do
+            tabFrames[j].Visible = (i==j)
+            tabBtns[j].BackgroundColor3 = (i==j) and THEME_ACCENT or THEME_BTN
+            tabBtns[j].TextColor3 = (i==j) and THEME_BG or THEME_ACCENT
+            tabBtns[j].BackgroundTransparency = (i==j) and 0.09 or 0.21
+        end
+    end)
+end
+
+-- == Visuals Tab ==
+local visualsTab = tabFrames[1]
+local vy = 18
+local function addVisualToggle(text, default, cb)
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, -34, 0, 32)
+    bg.Position = UDim2.new(0, 16, 0, vy)
+    bg.BackgroundColor3 = THEME_BTN
+    bg.BackgroundTransparency = 0.34
+    bg.BorderSizePixel = 0
+    bg.Parent = visualsTab
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1,-54,1,0)
+    lbl.Position = UDim2.new(0,0,0,0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextColor3 = THEME_LABEL
+    lbl.TextSize = 15
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = bg
+
+    local tog = Instance.new("TextButton")
+    tog.Size = UDim2.new(0, 32, 1, -8)
+    tog.Position = UDim2.new(1,-40,0,4)
+    tog.BackgroundColor3 = default and THEME_ON or THEME_OFF
+    tog.Text = default and "✓" or ""
+    tog.TextColor3 = default and THEME_BG or THEME_ACCENT
+    tog.Font = Enum.Font.GothamBold
+    tog.TextSize = 17
+    tog.BorderSizePixel = 0
+    tog.Parent = bg
+
+    local val = default
+    tog.MouseButton1Click:Connect(function()
+        val = not val
+        tog.BackgroundColor3 = val and THEME_ON or THEME_OFF
+        tog.Text = val and "✓" or ""
+        tog.TextColor3 = val and THEME_BG or THEME_ACCENT
+        cb(val)
+    end)
+    vy = vy + 38
+    return function() return val end
+end
+
+addVisualToggle("Highlight Box", _G.HighlightBox, function(v) _G.HighlightBox = v end)
+addVisualToggle("Show Name", _G.HighlightName, function(v) _G.HighlightName = v end)
+addVisualToggle("Show Distance", _G.HighlightDist, function(v) _G.HighlightDist = v end)
+
+-- == Settings Tab ==
+local settingsTab = tabFrames[2]
+local sy = 18
+local function addSettingOption(name, description, default, cb)
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, -34, 0, 34)
+    bg.Position = UDim2.new(0, 16, 0, sy)
+    bg.BackgroundColor3 = THEME_BTN
+    bg.BackgroundTransparency = 0.34
+    bg.BorderSizePixel = 0
+    bg.Parent = settingsTab
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1,-70,1,0)
+    lbl.Position = UDim2.new(0,0,0,0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = name.." ( "..description.." )"
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextColor3 = THEME_LABEL
+    lbl.TextSize = 14
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = bg
+
+    local tog = Instance.new("TextButton")
+    tog.Size = UDim2.new(0, 50, 1, -10)
+    tog.Position = UDim2.new(1,-60,0,5)
+    tog.BackgroundColor3 = default and THEME_ON or THEME_OFF
+    tog.Text = default and "✓" or ""
+    tog.TextColor3 = default and THEME_BG or THEME_ACCENT
+    tog.Font = Enum.Font.GothamBold
+    tog.TextSize = 16
+    tog.BorderSizePixel = 0
+    tog.Parent = bg
+
+    local val = default
+    tog.MouseButton1Click:Connect(function()
+        val = not val
+        tog.BackgroundColor3 = val and THEME_ON or THEME_OFF
+        tog.Text = val and "✓" or ""
+        tog.TextColor3 = val and THEME_BG or THEME_ACCENT
+        cb(val)
+    end)
+    sy = sy + 40
+    return function() return val end
+end
+
+addSettingOption("Minimize Key", "RightShift ile aç/kapat", false, function(val)
+    -- Bilgi amaçlı
+end)
+
+-- == Aimbot Tab ==
+local aimbotTab = tabFrames[3]
+local ay = 18
+local function addAimbotToggle(name, cb)
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, -34, 0, 42)
+    bg.Position = UDim2.new(0, 16, 0, ay)
+    bg.BackgroundColor3 = THEME_BTN
+    bg.BackgroundTransparency = 0.34
+    bg.BorderSizePixel = 0
+    bg.Parent = aimbotTab
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1,-54,1,0)
+    lbl.Position = UDim2.new(0,0,0,0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = name
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextColor3 = THEME_LABEL
+    lbl.TextSize = 15
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = bg
+
+    local tog = Instance.new("TextButton")
+    tog.Size = UDim2.new(0, 32, 1, -8)
+    tog.Position = UDim2.new(1,-40,0,4)
+    tog.BackgroundColor3 = THEME_OFF
+    tog.Text = ""
+    tog.TextColor3 = THEME_ACCENT
+    tog.Font = Enum.Font.GothamBold
+    tog.TextSize = 17
+    tog.BorderSizePixel = 0
+    tog.Parent = bg
+
+    local val = false
+    tog.MouseButton1Click:Connect(function()
+        val = not val
+        _G.AimbotEnabled = val
+        tog.BackgroundColor3 = val and THEME_ON or THEME_OFF
+        tog.Text = val and "✓" or ""
+        tog.TextColor3 = val and THEME_BG or THEME_ACCENT
+        cb(val)
+    end)
+    ay = ay + 48
+end
+
+addAimbotToggle("Enable Aimbot (Kod eklenmemiştir)", function(val)
+    -- Şimdilik işlevsiz
+end)
+
+-- == Other Tab ==
+local otherTab = tabFrames[4]
+local oy = 20
+local info = Instance.new("TextLabel")
+info.Size = UDim2.new(1,-38,1,-38)
+info.Position = UDim2.new(0,19,0,oy)
+info.BackgroundTransparency = 1
+info.Text = "Ekstra özellikler bu sekmeye eklenebilir.\nGUI tamamen özelleştirilebilir ve genişletilebilir."
+info.TextColor3 = THEME_LABEL
+info.Font = Enum.Font.Gotham
+info.TextSize = 15
+info.TextWrapped = true
+info.Parent = otherTab
+
+-- KÜÇÜLTME & KAPATMA
+local minimized = false
+minimize.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    main.Visible = not minimized
+    mini.Visible = minimized
+end)
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr.Character and plr.Character:FindFirstChild("PH_BILL") then
+            plr.Character.PH_BILL:Destroy()
+        end
+        if plr.Character and plr.Character:FindFirstChild("PH_HL") then
+            plr.Character.PH_HL:Destroy()
+        end
+    end
+end)
+mini.MouseButton1Click:Connect(function()
+    minimized = false
+    main.Visible = true
+    mini.Visible = false
+end)
+
+-- Mobil sürükleme desteği
+local function enableMobileDrag(f)
+    local dragToggle, dragStart, startPos
+    f.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragToggle = true
+            dragStart = input.Position
+            startPos = f.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragToggle = false end end)
+        end
+    end)
+    f.InputChanged:Connect(function(input)
+        if dragToggle and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+            local delta = input.Position-dragStart
+            f.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+delta.X, startPos.Y.Scale, startPos.Y.Offset+delta.Y)
+        end
+    end)
+end
+enableMobileDrag(main)
+enableMobileDrag(mini)
+
+-- =======================
+-- == PLAYER HIGHLIGHT ==
+-- =======================
+
+local function isMM2()
+    return game.PlaceId == MM2_PLACE_ID
+end
+
+local function getRole(plr)
+    local role = "Innocent"
+    if not isMM2() then return role end
+    pcall(function()
+        local Game = game:GetService("Workspace"):FindFirstChild("Game") or game:GetService("ReplicatedStorage"):FindFirstChild("Game")
+        if Game and Game:FindFirstChild("Players") then
+            local p = Game.Players:FindFirstChild(plr.Name)
+            if p and p:FindFirstChild("Role") then
+                local val = p.Role.Value
+                if val == "Murderer" then
+                    role = "Murderer"
+                elseif val == "Sheriff" then
+                    role = "Sheriff"
+                else
+                    role = "Innocent"
+                end
+            end
+        end
+    end)
+    if role == "Innocent" then
+        pcall(function()
+            if plr.Backpack:FindFirstChild("Gun") or (plr.Character and plr.Character:FindFirstChild("Gun")) then
+                role = "Sheriff"
+            end
+            if plr.Backpack:FindFirstChild("Knife") or (plr.Character and plr.Character:FindFirstChild("Knife")) then
+                role = "Murderer"
+            end
+        end)
+    end
+    return role
+end
+
+local function createHighlight(char, color)
+    if not char or char:FindFirstChild("PH_HL") then return end
+    if not _G.HighlightBox then return end
+    local hl = Instance.new("Highlight")
+    hl.Name = "PH_HL"
+    hl.Adornee = char
+    hl.FillColor = color
+    hl.OutlineColor = color
+    hl.FillTransparency = 0.8
+    hl.OutlineTransparency = 0.13
+    hl.Parent = char
+end
+
+local function removeHighlight(char)
+    if char and char:FindFirstChild("PH_HL") then
+        char.PH_HL:Destroy()
+    end
+end
+
+local function createBillboard(plr, char, color, role)
+    if char:FindFirstChild("PH_BILL") then return end
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "PH_BILL"
+    bb.Adornee = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+    bb.Size = UDim2.new(0, 140, 0, 38)
+    bb.AlwaysOnTop = true
+    bb.StudsOffset = Vector3.new(0, 2.5, 0)
+    bb.Parent = char
+
+    local name = Instance.new("TextLabel")
+    name.Name = "PH_NAME"
+    name.BackgroundTransparency = 1
+    name.TextColor3 = color
+    name.TextStrokeTransparency = 0.7
+    name.Font = Enum.Font.GothamBold
+    name.TextSize = 16
+    name.Size = UDim2.new(1,0,0.59,0)
+    name.Text = plr.DisplayName.." ["..role.."]"
+    name.Visible = _G.HighlightName
+    name.Parent = bb
+
+    local dist = Instance.new("TextLabel")
+    dist.Name = "PH_DIST"
+    dist.BackgroundTransparency = 1
+    dist.TextColor3 = color
+    dist.TextStrokeTransparency = 0.5
+    dist.Font = Enum.Font.Gotham
+    dist.TextSize = 14
+    dist.Position = UDim2.new(0,0,0.59,-2)
+    dist.Size = UDim2.new(1,0,0.41,0)
+    dist.Text = ""
+    dist.Visible = _G.HighlightDist
+    dist.Parent = bb
+end
+
+local function removeBillboard(char)
+    if char and char:FindFirstChild("PH_BILL") then
+        char.PH_BILL:Destroy()
+    end
+end
+
+local function updateBillboard(plr, char, color, role)
+    local bb = char:FindFirstChild("PH_BILL")
+    if bb then
+        local name = bb:FindFirstChild("PH_NAME")
+        local dist = bb:FindFirstChild("PH_DIST")
+        if name then
+            name.Visible = _G.HighlightName
+            name.TextColor3 = color
+            name.Text = plr.DisplayName.." ["..role.."]"
+        end
+        if dist then
+            dist.Visible = _G.HighlightDist
+            dist.TextColor3 = color
+            if _G.HighlightDist and char:FindFirstChild("HumanoidRootPart") then
+                local studs = (char.HumanoidRootPart.Position-Camera.CFrame.Position).Magnitude
+                dist.Text = string.format("%.0fm", studs/3.3)
+            else
+                dist.Text = ""
+            end
+        end
+    end
+end
+
+local function applyHighlight(plr)
+    if plr == LocalPlayer then return end
+    local function charAdded(char)
+        if not isMM2() then return end
+        local role = getRole(plr)
+        local color = COLORS[role]
+        if _G.HighlightBox then createHighlight(char, color) end
+        createBillboard(plr, char, color, role)
+        char.AncestryChanged:Connect(function(_, parent)
+            if not parent then
+                removeHighlight(char)
+                removeBillboard(char)
+            end
+        end)
+    end
+    if plr.Character then charAdded(plr.Character) end
+    plr.CharacterAdded:Connect(charAdded)
+end
+
+local function cleanupPlayer(plr)
+    if plr.Character then
+        removeHighlight(plr.Character)
+        removeBillboard(plr.Character)
+    end
+end
+
+Players.PlayerAdded:Connect(applyHighlight)
+Players.PlayerRemoving:Connect(cleanupPlayer)
+for _,plr in ipairs(Players:GetPlayers()) do
+    applyHighlight(plr)
+end
+
+RunService.RenderStepped:Connect(function()
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            if not isMM2() then
+                removeHighlight(plr.Character)
+                removeBillboard(plr.Character)
+            else
+                local role = getRole(plr)
+                local color = COLORS[role]
+                -- Highlight güncelle
+                if _G.HighlightBox then
+                    if not plr.Character:FindFirstChild("PH_HL") then
+                        createHighlight(plr.Character, color)
+                    else
+                        local hl = plr.Character.PH_HL
+                        if hl.FillColor ~= color then
+                            hl.FillColor = color
+                            hl.OutlineColor = color
+                        end
+                    end
+                else
+                    removeHighlight(plr.Character)
+                end
+                -- Billboard güncelle
+                updateBillboard(plr, plr.Character, color, role)
+                if not _G.HighlightName and not _G.HighlightDist then
+                    removeBillboard(plr.Character)
+                elseif not plr.Character:FindFirstChild("PH_BILL") then
+                    createBillboard(plr, plr.Character, color, role)
+                end
+            end
+        end
+    end
+end)
+
+-- GUI aç/kapa tuşu (varsayılan: RightShift)
+game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
+    if input.KeyCode == _G.GUIKey and not gpe then
+        main.Visible = not main.Visible
+        mini.Visible = not main.Visible
+    end
+end)
